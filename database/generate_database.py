@@ -11,10 +11,10 @@ INPUTS_DIR = os.path.join(BASE_DIR, "inputs")
 OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
 
 MESH_CONFIGS = [
-    ("femur_s4", 1.0),
-    ("cyl50_s4", 0.1),
-    ("hex_sphe_s3", 2.0),
-    ("cortex_s3", 2.0),
+    "femur_s4",
+    "cyl50_s4",
+    "hex_sphe_s3",
+    "cortex_s3",
 ]
 
 NUM_PERTURBATIONS = 250
@@ -23,12 +23,12 @@ def setup_directories():
     print("Setting up directory structure...")
     os.makedirs(INPUTS_DIR, exist_ok=True)
     os.makedirs(OUTPUTS_DIR, exist_ok=True)
-    for mesh_name, _ in MESH_CONFIGS:
+    for mesh_name in MESH_CONFIGS:
         os.makedirs(os.path.join(OUTPUTS_DIR, mesh_name), exist_ok=True)
 
 def move_inputs():
     print("Checking and moving input meshes...")
-    for mesh_name, _ in MESH_CONFIGS:
+    for mesh_name in MESH_CONFIGS:
         filename = f"{mesh_name}.m3d"
         src_path = os.path.join(PROJECT_ROOT, filename)
         dest_path = os.path.join(INPUTS_DIR, filename)
@@ -80,7 +80,7 @@ def generate_database():
     
     print("\nPreparing tasks...")
     tasks = []
-    for mesh_name, _ in MESH_CONFIGS:
+    for mesh_name in MESH_CONFIGS:
         for idx in range(NUM_PERTURBATIONS):
             tasks.append((mesh_name, idx))
             
@@ -131,7 +131,7 @@ def verify_files():
     actual_count = 0
     missing_files = []
     
-    for mesh_name, _ in MESH_CONFIGS:
+    for mesh_name in MESH_CONFIGS:
         mesh_dir = os.path.join(OUTPUTS_DIR, mesh_name)
         file_list = os.listdir(mesh_dir)
         
