@@ -338,7 +338,7 @@ public:
 		return is_on_surface;
 	}
 
-	// randomize nodes: add uniform(-1,1)*d to each coordinate
+	// randomize nodes: add uniform random displacement inside sphere of radius d * local_average_edge_length
 	void randomizeNodes(double d, unsigned int seed = 0, bool keep_surface_fixed = false) {
 		if (d <= 0.0) return;
 		unsigned int use_seed = seed;
@@ -356,11 +356,63 @@ public:
 			is_on_surface.assign(points.size(), false);
 		}
 
+		std::vector<std::vector<unsigned int>> neighbors(points.size());
+		for (size_t i = 0; i < elements.size(); ++i) {
+			Element* elem = elements[i];
+			const auto& pts = elem->getPoints();
+			unsigned int np = pts.size();
+			if (np == 4) {
+				neighbors[pts[0]].push_back(pts[1]); neighbors[pts[0]].push_back(pts[2]); neighbors[pts[0]].push_back(pts[3]);
+				neighbors[pts[1]].push_back(pts[0]); neighbors[pts[1]].push_back(pts[2]); neighbors[pts[1]].push_back(pts[3]);
+				neighbors[pts[2]].push_back(pts[0]); neighbors[pts[2]].push_back(pts[1]); neighbors[pts[2]].push_back(pts[3]);
+				neighbors[pts[3]].push_back(pts[0]); neighbors[pts[3]].push_back(pts[1]); neighbors[pts[3]].push_back(pts[2]);
+			} else if (np == 5) {
+				neighbors[pts[0]].push_back(pts[1]); neighbors[pts[0]].push_back(pts[3]); neighbors[pts[0]].push_back(pts[4]);
+				neighbors[pts[1]].push_back(pts[0]); neighbors[pts[1]].push_back(pts[2]); neighbors[pts[1]].push_back(pts[4]);
+				neighbors[pts[2]].push_back(pts[1]); neighbors[pts[2]].push_back(pts[3]); neighbors[pts[2]].push_back(pts[4]);
+				neighbors[pts[3]].push_back(pts[0]); neighbors[pts[3]].push_back(pts[2]); neighbors[pts[3]].push_back(pts[4]);
+				neighbors[pts[4]].push_back(pts[0]); neighbors[pts[4]].push_back(pts[1]); neighbors[pts[4]].push_back(pts[2]); neighbors[pts[4]].push_back(pts[3]);
+			} else if (np == 6) {
+				neighbors[pts[0]].push_back(pts[1]); neighbors[pts[0]].push_back(pts[2]); neighbors[pts[0]].push_back(pts[3]);
+				neighbors[pts[1]].push_back(pts[0]); neighbors[pts[1]].push_back(pts[2]); neighbors[pts[1]].push_back(pts[4]);
+				neighbors[pts[2]].push_back(pts[0]); neighbors[pts[2]].push_back(pts[1]); neighbors[pts[2]].push_back(pts[5]);
+				neighbors[pts[3]].push_back(pts[4]); neighbors[pts[3]].push_back(pts[5]); neighbors[pts[3]].push_back(pts[0]);
+				neighbors[pts[4]].push_back(pts[3]); neighbors[pts[4]].push_back(pts[5]); neighbors[pts[4]].push_back(pts[1]);
+				neighbors[pts[5]].push_back(pts[3]); neighbors[pts[5]].push_back(pts[4]); neighbors[pts[5]].push_back(pts[2]);
+			} else if (np == 8) {
+				neighbors[pts[0]].push_back(pts[1]); neighbors[pts[0]].push_back(pts[3]); neighbors[pts[0]].push_back(pts[4]);
+				neighbors[pts[1]].push_back(pts[0]); neighbors[pts[1]].push_back(pts[2]); neighbors[pts[1]].push_back(pts[5]);
+				neighbors[pts[2]].push_back(pts[1]); neighbors[pts[2]].push_back(pts[3]); neighbors[pts[2]].push_back(pts[6]);
+				neighbors[pts[3]].push_back(pts[0]); neighbors[pts[3]].push_back(pts[2]); neighbors[pts[3]].push_back(pts[7]);
+				neighbors[pts[4]].push_back(pts[5]); neighbors[pts[4]].push_back(pts[7]); neighbors[pts[4]].push_back(pts[0]);
+				neighbors[pts[5]].push_back(pts[4]); neighbors[pts[5]].push_back(pts[6]); neighbors[pts[5]].push_back(pts[1]);
+				neighbors[pts[6]].push_back(pts[5]); neighbors[pts[6]].push_back(pts[7]); neighbors[pts[6]].push_back(pts[2]);
+				neighbors[pts[7]].push_back(pts[4]); neighbors[pts[7]].push_back(pts[6]); neighbors[pts[7]].push_back(pts[3]);
+			}
+		}
+
+		std::vector<double> h_local(points.size(), 0.0);
+		for (size_t i = 0; i < neighbors.size(); ++i) {
+			std::sort(neighbors[i].begin(), neighbors[i].end());
+			neighbors[i].erase(std::unique(neighbors[i].begin(), neighbors[i].end()), neighbors[i].end());
+			if (neighbors[i].empty()) continue;
+			double dist_sum = 0.0;
+			for (size_t j = 0; j < neighbors[i].size(); ++j) {
+				dist_sum += points[i].DistanceTo(points[neighbors[i][j]]);
+			}
+			h_local[i] = dist_sum / neighbors[i].size();
+		}
+
 		for (size_t i = 0; i < points.size(); ++i) {
 			if (is_on_surface[i]) continue;
-			double rx = uni(rng) * d;
-			double ry = uni(rng) * d;
-			double rz = uni(rng) * d;
+			double radius = d * h_local[i];
+			if (radius <= 0.0) continue;
+			double rx, ry, rz;
+			do {
+				rx = uni(rng) * radius;
+				ry = uni(rng) * radius;
+				rz = uni(rng) * radius;
+			} while (rx * rx + ry * ry + rz * rz > radius * radius);
 			points[i][0] += rx;
 			points[i][1] += ry;
 			points[i][2] += rz;

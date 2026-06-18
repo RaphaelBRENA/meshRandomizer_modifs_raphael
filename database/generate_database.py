@@ -49,7 +49,8 @@ def move_inputs():
             print(f"Warning: Base mesh {filename} not found in root or inputs directory!")
 
 def run_perturbation(args):
-    mesh_name, d, idx = args
+    mesh_name, idx = args
+    d = 0.05 + 0.40 * (idx / (NUM_PERTURBATIONS - 1.0) if NUM_PERTURBATIONS > 1 else 0.0)
     input_file = os.path.join(INPUTS_DIR, f"{mesh_name}.m3d")
     output_base = os.path.join(OUTPUTS_DIR, mesh_name, f"{mesh_name}_p{idx}")
     seed = 1000 + idx
@@ -65,7 +66,7 @@ def run_perturbation(args):
     ]
     
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         return True, mesh_name, idx, None
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr.decode('utf-8', errors='ignore') or e.stdout.decode('utf-8', errors='ignore')
@@ -79,9 +80,9 @@ def generate_database():
     
     print("\nPreparing tasks...")
     tasks = []
-    for mesh_name, d in MESH_CONFIGS:
+    for mesh_name, _ in MESH_CONFIGS:
         for idx in range(NUM_PERTURBATIONS):
-            tasks.append((mesh_name, d, idx))
+            tasks.append((mesh_name, idx))
             
     total_tasks = len(tasks)
     print(f"Starting parallel generation of {total_tasks} perturbed meshes using ThreadPoolExecutor...")
