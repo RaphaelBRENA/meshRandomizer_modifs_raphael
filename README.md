@@ -549,3 +549,9 @@ L'exécution du script de génération a permis de créer la base de données su
 - **1000 fichiers de maillages volumiques déformés au format M3D** (250 par géométrie).
 - **1000 fichiers d'exportation au format VTK** correspondants pour la visualisation dans ParaView.
 - **Nombre total de fichiers générés** : 2000 fichiers.
+
+---
+
+## 8. Analyse Statistique avec le JEANS
+
+Analyse dans le fichier PDF `analysis\report_statistical_analysis.pdf`.
