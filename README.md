@@ -554,4 +554,4 @@ L'exécution du script de génération a permis de créer la base de données su
 
 ## 8. Analyse Statistique avec le JEANS
 
-Analyse dans le fichier PDF `analysis\report_statistical_analysis.pdf`.
+Rapport de l'analyse : [report_statistical_analysis.pdf](analysis/report_statistical_analysis.pdf)
